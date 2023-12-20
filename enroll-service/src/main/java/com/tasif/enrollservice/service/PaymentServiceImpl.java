@@ -10,6 +10,7 @@ import com.tasif.enrollservice.model.Policy;
 import com.tasif.enrollservice.model.User;
 import com.tasif.enrollservice.repository.EnrollRepository;
 import com.tasif.enrollservice.repository.PaymentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
@@ -33,6 +35,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public Payment makePayment(String username, Integer policyId, Integer amount) {
+        log.info("Make payment request for {}", username);
         User user = userFeignClient.getUserByName(username);
         Policy policy = policyFeignClient.getPolicy(policyId);
         Enroll enroll = enrollRepository.findByUserIdAndPolicyId(user.getId(), policy.getId()).orElseThrow(() ->
@@ -46,6 +49,7 @@ public class PaymentServiceImpl implements PaymentService {
         Integer paidAmount = Objects.requireNonNullElse(enroll.getAmountPaid(), 0);
         Integer outStandingAmount = enroll.getPolicyAmount() - paidAmount;
         if (amount > outStandingAmount) {
+            log.error("Amount is grater than the outstanding amount for {}",username);
             throw new PaymentException("Amount is grater than the outstanding amount");
         }
 
@@ -57,6 +61,8 @@ public class PaymentServiceImpl implements PaymentService {
 
         paymentRepository.save(payment);
         enrollRepository.save(enroll);
+
+        log.info("Payment has been made succesfully for {}", username);
         return payment;
     }
 }

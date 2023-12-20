@@ -37,10 +37,11 @@ public class EnrollServiceImpl implements EnrollService{
 
     @Override
     public Enroll enrollUser(String username, Integer policyId, EnrollDto enrollDto) {
-
+        log.info("Enrollment request for {}", username);
         User user = userFeignClient.getUserByName(username);
         Policy policy = policyFeignClient.getPolicy(policyId);
         enrollRepository.findByUserIdAndPolicyId(user.getId(),policyId).ifPresent(e->{
+            log.error("User already enrolled in policy "+ username);
             throw new UserAlreadyEnrolledException("User already enrolled in policy");
         });
 
@@ -55,22 +56,26 @@ public class EnrollServiceImpl implements EnrollService{
         enroll.setEnrollDate(LocalDate.now());
         log.info("Enroll --> " + enroll);
         enroll = enrollRepository.save(enroll);
+        log.info("Enrollment completed for {}",username );
         return enroll;
     }
 
     @Override
     public Enroll claim(String username, Integer policyId, Integer claimAmount) {
+        log.info("Claim initiated for {}", username);
         User user = userFeignClient.getUserByName(username);
         Policy policy = policyFeignClient.getPolicy(policyId);
         Enroll enroll = enrollRepository.findByUserIdAndPolicyId(user.getId(), policy.getId()).orElseThrow(() ->
                 new UserNotEnrolledException("User is not enrolled in policy"));
 
         if(claimAmount>enroll.getCoverageAmount()){
+            log.error("Claim amount is more than the coverage for {}",username);
             throw new PaymentException("Claim amount is more than the coverage");
         }
 
         enroll.setCoverageAmount(enroll.getCoverageAmount() - claimAmount);
         enrollRepository.save(enroll);
+        log.info("Claim completed for {}", username);
 
         return enroll;
     }

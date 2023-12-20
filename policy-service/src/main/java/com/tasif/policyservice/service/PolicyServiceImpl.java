@@ -5,6 +5,7 @@ import com.tasif.policyservice.exception.PolicyAlreadyExistsException;
 import com.tasif.policyservice.exception.PolicyNotFoundException;
 import com.tasif.policyservice.model.Policy;
 import com.tasif.policyservice.repository.PolicyRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
-public class PolicyServiceImpl implements PolicyService{
+@Slf4j
+public class PolicyServiceImpl implements PolicyService {
 
     @Autowired
     private PolicyRepository policyRepository;
@@ -22,28 +24,34 @@ public class PolicyServiceImpl implements PolicyService{
 
     @Override
     public Policy createPolicy(PolicyDto policyDto) {
-        policyRepository.findPolicyByName(policyDto.getName()).ifPresent(p->{
+        log.info("Creating policy {}", policyDto.getName());
+        policyRepository.findPolicyByName(policyDto.getName()).ifPresent(p -> {
+            log.error("Policy already exists with {}", p.getName());
             throw new PolicyAlreadyExistsException("Policy already exists with " + p.getName());
         });
         Policy policy = modelMapper.map(policyDto, Policy.class);
-        System.out.println(policy);
         policy = policyRepository.save(policy);
+        log.info("Policy is created successfully {}", policy);
         return policy;
     }
 
     @Override
     public Policy updatePolicy(Integer id, PolicyDto policyDto) {
-        Policy policy = policyRepository.findById(id).orElseThrow(()->new PolicyNotFoundException("Policy not found"));
+        log.info("Updating policy {}", policyDto.getName());
+        Policy policy = policyRepository.findById(id).orElseThrow(() -> new PolicyNotFoundException("Policy not found"));
         modelMapper.map(policyDto, policy);
         System.out.println(policy);
         policy = policyRepository.save(policy);
+        log.info("Policy is updated successfully {}", policy);
         return policy;
     }
 
     @Override
     public Policy deletePolicy(Integer id) {
-        Policy policy = policyRepository.findById(id).orElseThrow(()->new PolicyNotFoundException("Policy not found"));
+        Policy policy = policyRepository.findById(id).orElseThrow(() -> new PolicyNotFoundException("Policy not found"));
+        log.info("Deleting policy {}", policy.getName());
         policyRepository.delete(policy);
+        log.info("Policy is deleted successfully {}", policy);
         return policy;
     }
 
@@ -54,7 +62,8 @@ public class PolicyServiceImpl implements PolicyService{
 
     @Override
     public Policy getPolicy(Integer id) {
-        Policy policy = policyRepository.findById(id).orElseThrow(()->new PolicyNotFoundException("Policy not found"));
+        log.info("Get policy by id");
+        Policy policy = policyRepository.findById(id).orElseThrow(() -> new PolicyNotFoundException("Policy not found"));
         return policy;
     }
 }

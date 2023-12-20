@@ -23,22 +23,26 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    private String username;
 
     @Override
     public User createUser(UserDto userDto) {
         userRepository.findByName(userDto.getName()).ifPresent(user -> {
+            log.error("User already exist with " + user.getName());
             throw new UserAlreadyExistsException("User already exist with " + user.getName());
         });
         userDto.setPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
         User user = modelMapper.map(userDto, User.class);
         log.info("User -- > " + user);
         user = userRepository.save(user);
+        log.info("User registered success {}", user.getName());
         return user;
     }
 
     @Override
     public User getUserByUsername(String username) {
-        User user = userRepository.findByName(username).orElseThrow(()->new UserNotFoundException("User doesn't exist"));
+        log.info("Get user by name {}", username);
+        User user = userRepository.findByName(username).orElseThrow(() -> new UserNotFoundException("User doesn't exist"));
         return user;
     }
 }

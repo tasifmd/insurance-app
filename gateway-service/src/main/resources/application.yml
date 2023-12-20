@@ -1,0 +1,26 @@
+server:
+  port: 9050
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/user-service/**
+        - id: policy-service
+          uri: lb://policy-service
+          predicates:
+            - Path=/policy-service/**
+        - id: enroll-service
+          uri: lb://enroll-service
+          predicates:
+            - Path=/enroll-service/**
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
+
