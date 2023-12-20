@@ -10,14 +10,20 @@ spring:
           uri: lb://user-service
           predicates:
             - Path=/user-service/**
+          filters:
+            - StripPrefix=1
         - id: policy-service
           uri: lb://policy-service
           predicates:
             - Path=/policy-service/**
+          filters:
+            - StripPrefix=1
         - id: enroll-service
           uri: lb://enroll-service
           predicates:
             - Path=/enroll-service/**
+          filters:
+            - StripPrefix=1
 
 eureka:
   client:
